@@ -1,0 +1,26 @@
+{
+    "version": "1.4.1",
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "declaration": false,
+        "noImplicitAny": false,
+        "removeComments": false,
+        "noLib": false
+    },
+    "filesGlob": [
+        "./**/*.ts",
+        "!./node_modules/**/*.ts"
+    ],
+    "files": [
+        "./assembla.ts",
+        "./blueprint.ts",
+        "./canvas.ts",
+        "./dateutils.ts",
+        "./freshbooks.ts",
+        "./http.ts",
+        "./localstorage.d.ts",
+        "./promises.ts",
+        "./sphere.ts"
+    ]
+}
