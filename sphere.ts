@@ -196,6 +196,8 @@ export function save(object: ModelObject) {
 
         tx.executeSql('INSERT OR REPLACE INTO %1 VALUES (%2)'.arg(type.name).arg(args));
     });
+
+    objectChanged.emit(object.typeName(), object)
 }
 
 function execSQL(sql: string, args?: string[]): void {
@@ -224,6 +226,7 @@ export class ModelObject {
 
     delete() {
         execSQL('DELETE FROM ' + types[this.typeName()].name + " WHERE _id = ?", [this._id])
+        objectDeleted.emit(this.typeName(), this)
     }
 
     typeName() {
@@ -233,6 +236,20 @@ export class ModelObject {
     }
 
     static type: Type
+}
+
+class Signal {
+    listeners = []
+
+    connect(listener) {
+        this.listeners.push(listener)
+    }
+
+    emit(...args) {
+        this.listeners.forEach((listener: any) => {
+            listener.apply(null, args)
+        })
+    }
 }
 
 export interface Type {
@@ -258,3 +275,6 @@ function generateID(): string {
 
     return guid
 }
+
+var objectChanged = new Signal()
+var objectDeleted = new Signal()
