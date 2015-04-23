@@ -32,6 +32,15 @@ ListModel {
 
             onObjectChanged(object)
         })
+
+        Sphere.objectDeleted.connect(function(type, object) {
+            if (type !== model.type)
+                return
+
+            if (objectIds.indexOf(object._id) != -1) {
+                _removeId(object._id)
+            }
+        })
     }
 
     function onObjectChanged(object) {

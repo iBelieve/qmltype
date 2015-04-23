@@ -64,22 +64,6 @@ export function get(type: string, queryString?: string, args?: string[]): ModelO
         return null
 }
 
-export function deleteQuery(typeName: string, queryString: string, args?: string[]) {
-    if (!types[typeName].isAbstract) {
-        var sql = 'DELETE FROM ' + typeName
-        if (queryString != "" && queryString != undefined)
-            sql += ' WHERE ' + queryString
-
-        console.log("Deleting with SQL: " + sql)
-
-        execSQL(sql, args)
-    }
-
-    subclassesOf(types[typeName]).forEach((value: any) => {
-        deleteQuery(value.name, queryString, args)
-    })
-}
-
 export function query(typeName: string, queryString?: string, args?: string[]): ModelObject[] {
     var results:ModelObject[] = []
 
