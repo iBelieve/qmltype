@@ -25,15 +25,27 @@ enum RequestType {
 	POST, PUT, GET
 }
 
-export function post(path: string, args?: {}) {
+export interface BasicAuth {
+    username: string
+    password: string
+}
+
+export interface HttpArgs {
+    options?: string[]
+    headers?: {}
+    body?: string
+    basic_auth?: BasicAuth
+}
+
+export function post(path: string, args?: HttpArgs) {
     return request(path, RequestType.POST, args)
 }
 
-export function patch(path: string, args?: {}) {
+export function patch(path: string, args?: HttpArgs) {
     return request(path, RequestType.PUT, args)
 }
 
-export function put(path: string, args?: {}) {
+export function put(path: string, args?: HttpArgs) {
     return request(path, RequestType.PUT, args)
 }
 
@@ -41,7 +53,7 @@ export function put(path: string, args?: {}) {
 //    request(path, "DELETE", options, args)
 //}
 
-export function get(path: string, args?: {}) {
+export function get(path: string, args?: HttpArgs) {
     return request(path, RequestType.GET, args)
 }
 
@@ -57,15 +69,15 @@ function requestType(type: RequestType): string {
 	}
 }
 
-function request(path: string, type: RequestType, args: {}) {
+function request(path: string, type: RequestType, args: HttpArgs) {
     var address = path
     var call = requestType(type)
 
     if (!args) args = {}
 
-    var options = args['options'] ? args['options'] : []
-    var headers = args['headers'] ? args['headers'] : {}
-    var body = args['body'] ? args['body'] : undefined
+    var options = args.options ? args.options : []
+    var headers = args.headers ? args.headers : {}
+    var body = args.body ? args.body : undefined
 
     if (options.length > 0)
         address += (address.indexOf('?') == -1 ? "?" : "&") + options.join("&").replace(/ /g, "%20")
@@ -81,7 +93,7 @@ function request(path: string, type: RequestType, args: {}) {
         if (doc.readyState === XMLHttpRequest.DONE) {
             //console.log(doc.getResponseHeader("X-RateLimit-Remaining"))
 
-            //console.log(doc.responseText)
+            console.log(doc.responseText)
 
 
             var responseArray = doc.getAllResponseHeaders().split('\n')
@@ -92,7 +104,7 @@ function request(path: string, type: RequestType, args: {}) {
                 responseHeaders[items[0]] = items[1]
             }
 
-            //console.log("Status:",doc.status, "for call", call, address, headers['If-None-Match'], responseHeaders['etag'])
+            console.log("Status:",doc.status, "for call", call, address, headers['If-None-Match'], responseHeaders['etag'])
 
             promise.info['headers'] = responseHeaders
             promise.info['status'] = doc.status
@@ -116,7 +128,14 @@ function request(path: string, type: RequestType, args: {}) {
         promise.reject("Request timed out: " + address)
     }
 
-    doc.open(call, address, true);
+    if (args.basic_auth) {
+        doc.open(call, address, true,
+                args.basic_auth.username,
+                args.basic_auth.password);
+    } else {
+        doc.open(call, address, true);
+    }
+    
     for (var key in headers) {
         //console.log(key + ": " + headers[key])
         doc.setRequestHeader(key, headers[key])

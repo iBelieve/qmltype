@@ -181,6 +181,10 @@ ListModel {
         return list
     }
 
+    function at(index) {
+        return data[index]
+    }
+
     function _get(obj, prop) {
         if (prop.indexOf('.') === -1) {
             return obj[prop]
