@@ -192,5 +192,5 @@ export function timeFromDate(date) {
 }
 
 export function isValid(date) {
-    return date.toString() != "Invalid Date"
+    return date && date.toString() != "Invalid Date"
 }

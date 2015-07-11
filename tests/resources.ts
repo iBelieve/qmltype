@@ -3,9 +3,9 @@
 import * as Sphere from "../sphere"
 
 class TestClass extends Sphere.ModelObject {
-    text: string,
-    num: number,
-    bool: boolean,
+    text: string
+    num: number
+    bool: boolean
     date: Date
 
     static type: Sphere.Type = {

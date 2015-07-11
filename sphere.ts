@@ -15,7 +15,6 @@ export function open(name: string, description: string, version: string) {
         database.changeVersion(database.version, version, function (tx) {
             if (database.version === "") {
                 var sql = 'CREATE TABLE IF NOT EXISTS metadata(name TEXT UNIQUE, value TEXT)'
-                console.log("Creating db...")
                 tx.executeSql(sql);
             }
         })
@@ -79,7 +78,6 @@ export function query(typeName: string, queryString?: string, args?: string[]): 
             var sql = 'SELECT * FROM ' + typeName
             if (queryString != "" && queryString != undefined)
                 sql += ' WHERE ' + queryString
-            console.log(sql)
 
             var rows = tx.executeSql(sql, args).rows
             for(var i = 0; i < rows.length; i++) {
@@ -104,8 +102,11 @@ function loadFromData(type: string, data: {[key: string]: string}) {
             var jsType = types[type].properties[key]
             var value: any = data[key]
 
+            if (value == null)
+                value = undefined
+
             if (jsType == 'date') {
-                value = new Date(value)
+                value = value ? new Date(value) : undefined
             } else if (jsType == 'number') {
                 value = Number(value)
             } else if (jsType == 'json') {
@@ -163,6 +164,10 @@ function allPropertiesForType(type: Type): {[key: string]: string} {
     return properties
 }
 
+function deleteAll(type: Type): void {
+    execSQL('DELETE FROM ' + type.name)
+}
+
 function execSQL(sql: string, args?: string[]): void {
     if (!args)
         args = []
@@ -188,8 +193,6 @@ export class ModelObject {
     }
 
     save() {
-        console.log(this.typeName())
-        console.log(JSON.stringify(this))
         var type = types[this.typeName()]
 
         var object = this
@@ -199,8 +202,14 @@ export class ModelObject {
             for (var prop in type.properties) {
                 var value = object[prop]
 
+                if (value == null || value == undefined) {
+                    args += ", null"
+                    continue
+                }
+
                 if (type.properties[prop] == 'date')
-                    value = DateUtils.isValid(value) ? value.toISOString() : ""
+                    value = value ? DateUtils.isValid(value) ? value.toISOString() : ""
+                                  : undefined
                 else if (typeof(value) == 'object' || type.properties[prop] == 'json')
                     value = JSON.stringify(value)
 

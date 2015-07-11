@@ -1,6 +1,7 @@
 import QtQuick 2.3
 import QtTest 1.0
 import "../sphere.js" as Sphere
+import "../dateutils.js" as DateUtils
 import "resources.js" as Resources
 
 TestCase {
@@ -9,6 +10,10 @@ TestCase {
     function initTestCase() {
         Sphere.open("sphere-tests", "Unit tests for sphere", "1")
         Sphere.register(Resources.TestClass.type)
+    }
+
+    function init() {
+        Sphere.deleteAll(Resources.TestClass.type)
     }
 
     function test_open() {
@@ -22,12 +27,20 @@ TestCase {
                 "The test class should have been registered")
     }
 
-    function test_save() {
-        var testObject = new Resources.TestClass()
-        testObject.text = "A"
-        testObject.num = 4
-        testObject.date = new Date()
-        testObject.bool = true
+    function test_save_data() {
+        return [
+            {text: "ABC", num: 4, date: new Date(), bool: true}, // Basic valid date
+            {text: "ABC", num: 4.2, date: new Date(), bool: true}, // Decimal number
+            {text: "ABC", num: 4.2, date: undefined, bool: true}, // No date
+            {text: "ABC", num: 4.2, date: new Date("test"), bool: true}, // Invalid date
+            {text: "ABC", num: 4.2, date: new Date(), bool: false}, // Boolean "false"
+            {text: null, num: 4, date: new Date(), bool: true}, // Null data
+            {}, // No data
+        ]
+    }
+
+    function test_save(data) {
+        var testObject = new Resources.TestClass(data)
 
         testObject.save()
 
@@ -37,13 +50,18 @@ TestCase {
             var rows = tx.executeSql(sql, testObject._id).rows
             compare(rows.length, 1, "There should be only one instance of the test object")
 
-            var data = rows.item(0)
-            console.log(JSON.stringify(data))
+            var match = rows.item(0)
+            console.log(JSON.stringify(match))
 
-            compare(data['text'], "A", "The text property should be set correctly")
-            compare(data['num'], 4, "The number property should be set correctly")
-            compare(data['bool'], 1, "The boolean property should be set correctly")
-            compare(data['date'], testObject.date.toISOString(),
+            var dateString = data['date'] 
+                    ? DateUtils.isValid(data['date'])  ? data['date'].toISOString() : ""
+                    : undefined
+
+            nullCompare(match['text'], data['text'], "The text property should be set correctly")
+            nullCompare(match['num'], data['num'], "The number property should be set correctly")
+            nullCompare(match['bool'], data['bool'] === undefined ? undefined : data['bool'] ? 1 : 0, 
+                    "The boolean property should be set correctly")
+            nullCompare(match['date'], dateString,
                     "The date property should be set correctly")
         })
     }
@@ -67,5 +85,28 @@ TestCase {
                 "The date property should match the original value")
         compare(matchObject.bool, testObject.bool,
                 "The boolean property should match the original value")
+    }
+
+    function test_query() {
+        var obj1 = new Resources.TestClass()
+        obj1.text = "First object"
+        var obj2 = new Resources.TestClass()
+        obj2.text = "Second object"
+
+        obj1.save()
+        obj2.save()
+
+        var matches = Sphere.query("TestClass")
+
+        compare(matches.length, 2, "There should be two matching objects")
+        compare(matches[0].text, obj1.text, "The first object should be returned first")
+        compare(matches[1].text, obj2.text, "The second object should be returned second")
+    }
+
+    function nullCompare(actual, expected, msg) {
+        if (actual == null) actual = undefined
+        if (expected == null) expected = undefined
+
+        return compare(actual, expected, msg)
     }
 }
