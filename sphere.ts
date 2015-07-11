@@ -110,6 +110,8 @@ function loadFromData(type: string, data: {[key: string]: string}) {
                 value = Number(value)
             } else if (jsType == 'json') {
                 value = JSON.parse(value)
+            } else if (jsType == 'boolean') {
+                value = value ? true : false
             }
 
             json[key] = value
@@ -161,29 +163,6 @@ function allPropertiesForType(type: Type): {[key: string]: string} {
     return properties
 }
 
-export function save(object: ModelObject) {
-    console.log(object.typeName())
-    var type = types[object.typeName()]
-
-    database.transaction(function(tx) {
-        var args = "'%1'".arg(object._id)
-        for (var prop in type.properties) {
-            var value = object[prop]
-
-            if (type.properties[prop] == 'date')
-                value = DateUtils.isValid(value) ? value.toISOString() : ""
-            else if (typeof(value) == 'object' || type.properties[prop] == 'json')
-                value = JSON.stringify(value)
-
-            args += ", '%1'".arg(value)
-        }
-
-        tx.executeSql('INSERT OR REPLACE INTO %1 VALUES (%2)'.arg(type.name).arg(args));
-    });
-
-    objectChanged.emit(object.typeName(), object)
-}
-
 function execSQL(sql: string, args?: string[]): void {
     if (!args)
         args = []
@@ -208,14 +187,38 @@ export class ModelObject {
         }
     }
 
+    save() {
+        console.log(this.typeName())
+        console.log(JSON.stringify(this))
+        var type = types[this.typeName()]
+
+        var object = this
+
+        database.transaction(function(tx) {
+            var args = "'%1'".arg(object._id)
+            for (var prop in type.properties) {
+                var value = object[prop]
+
+                if (type.properties[prop] == 'date')
+                    value = DateUtils.isValid(value) ? value.toISOString() : ""
+                else if (typeof(value) == 'object' || type.properties[prop] == 'json')
+                    value = JSON.stringify(value)
+
+                args += ", '%1'".arg(value)
+            }
+
+            tx.executeSql('INSERT OR REPLACE INTO %1 VALUES (%2)'.arg(type.name).arg(args));
+        });
+
+        objectChanged.emit(this.typeName(), this)
+    }
+
     delete() {
         execSQL('DELETE FROM ' + types[this.typeName()].name + " WHERE _id = ?", [this._id])
         objectDeleted.emit(this.typeName(), this)
     }
 
     typeName() {
-        console.log(JSON.stringify(this["constructor"]["type"]));
-
         return this["constructor"]["type"]["name"];
     }
 

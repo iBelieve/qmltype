@@ -20,6 +20,7 @@
         "./http.ts",
         "./localstorage.d.ts",
         "./promises.ts",
-        "./sphere.ts"
+        "./sphere.ts",
+        "./tests/resources.ts"
     ]
 }
