@@ -25,6 +25,11 @@ export function open(name: string, description: string, version: string) {
 export function register(type: Type) {
     var name: string = type.name
 
+    if (!types) {
+        console.error("Unable to register " + name + ": database not opened!")
+        return
+    }
+
     types[name] = type
 
     if (!type.hasOwnProperty("isAbstract") || !type.isAbstract) {
