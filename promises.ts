@@ -52,14 +52,18 @@ export class Promise {
     }
 
     resolve(value) {
-        for (var i = 0; i < this.onThen.length; i++) {
-            var handler = this.onThen[i]
-            value = handler(value, this.info)
-        }
+        try {
+            for (var i = 0; i < this.onThen.length; i++) {
+                var handler = this.onThen[i]
+                value = handler(value, this.info)
+            }
 
-        for (var i = 0; i < this.onDone.length; i++) {
-            var handler = this.onDone[i]
-            handler(value, this.info)
+            for (var i = 0; i < this.onDone.length; i++) {
+                var handler = this.onDone[i]
+                handler(value, this.info)
+            }
+        } catch (exception) {
+            this.reject(exception)
         }
     }
 
