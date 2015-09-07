@@ -204,24 +204,25 @@ export class ModelObject {
 
         database.transaction(function(tx) {
             var args = "'%1'".arg(object._id)
+            var values = []
             for (var prop in type.properties) {
                 var value = object[prop]
 
                 if (value == null || value == undefined) {
-                    args += ", null"
-                    continue
-                }
-
-                if (type.properties[prop] == 'date')
+                    value = null
+                } else if (type.properties[prop] == 'date') {
                     value = value ? DateUtils.isValid(value) ? value.toISOString() : ""
                                   : undefined
-                else if (typeof(value) == 'object' || type.properties[prop] == 'json')
+                } else if (typeof(value) == 'object' || type.properties[prop] == 'json') {
                     value = JSON.stringify(value)
+                }
 
-                args += ", '%1'".arg(value)
+                args += ", ?"
+                values.push(value)
             }
 
-            tx.executeSql('INSERT OR REPLACE INTO %1 VALUES (%2)'.arg(type.name).arg(args));
+            console.log("Saving: " + JSON.stringify(values))
+            tx.executeSql('INSERT OR REPLACE INTO %1 VALUES (%2)'.arg(type.name).arg(args), values);
         });
 
         objectChanged.emit(this.typeName(), this)
