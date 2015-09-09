@@ -87,7 +87,7 @@ export function dateIsThisWeek(date) {
     return dateIsBefore(date, end)
 }
 
-export function friendlyTime(time, standalone) {
+export function friendlyTime(time, standalone, day) {
     var now = new Date()
     time = new Date(time)
     var seconds = (now - time)/1000;
@@ -106,9 +106,9 @@ export function friendlyTime(time, standalone) {
         return ("%1 hours ago").arg(hours)
     var days = Math.round(hours/24)
     if (days == 1)
-        return ("1 day ago")
-    else if (days <= 10)
-        return ("%1 days ago").arg(days)
+        return day ? "Yesterday" : "1 day ago"
+    else if (days < 7)
+        return day ? dayOfWeek(time) : ("%1 days ago").arg(days)
     return standalone ? Qt.formatDate(time) : ("on %1").arg(Qt.formatDate(time))
 }
 
